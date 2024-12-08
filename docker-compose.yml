@@ -1,0 +1,24 @@
+name: valkey
+services:
+  db:
+    image: valkey/valkey:latest
+    container_name: valkey-db
+    hostname: valkey
+    command: ['valkey-server', '/etc/valkey/valkey.conf']
+    ports:
+      - 6379:6379
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - VALKEY_DATABASES=10000000
+      - VALKEY_EXTRA_FLAGS=--save 60 1 --loglevel warning
+      - VALKEY_PASSWORD=${DB_ADMIN_PASS:-l37u58CUsw2BXURTrTmnjYjBO5IDRyEP}
+    volumes:
+      - '/var/lib/srv/$USER/docker/valkey/valkey/latest/rootfs/data/db/valkey:/data'
+    healthcheck:
+      test: ['CMD-SHELL', 'valkey-cli ping | grep PONG']
+      interval: 1s
+      timeout: 3s
+      retries: 5
+    extra_hosts:
+      - 'localhost:172.17.0.1'
+      - 'host.docker.internal:host-gateway'

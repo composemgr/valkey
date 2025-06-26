@@ -1,0 +1,58 @@
+# nginx proxy address - http://172.17.0.1:59031
+
+name: valkey
+x-logging: &default-logging
+  options:
+    max-size: '5m'
+    max-file: '1'
+  driver: json-file
+
+services:
+  admin:
+    image: erikdubbelboer/phpredisadmin:1
+    container_name: valkey-admin
+    hostname: valkey-admin
+    restart: always
+    pull_policy: always
+    tty: true
+    stdin_open: true
+    logging: *default-logging
+    environment:
+      - REDIS_1_NAME=valkey
+      - REDIS_1_HOST=valkey
+    ports:
+      - '172.17.0.1:59031:80'
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - valkey
+
+  db:
+    image: valkey/valkey:latest
+    container_name: valkey
+    hostname: valkey
+    restart: always
+    pull_policy: always
+    logging: *default-logging
+    environment:
+      - ALLOW_EMPTY_PASSWORD=no
+      - VALKEY_DATABASES=10000000
+      - VALKEY_EXTRA_FLAGS=--save 60 1 --loglevel warning
+      - VALKEY_PASSWORD=${DB_ADMIN_PASS:-l37u58CUsw2BXURTrTmnjYjBO5IDRyEP}
+    ports:
+      - 6379:6379
+    volumes:
+      - './rootfs/db/valkey:/data'
+    healthcheck:
+      test: ['CMD-SHELL', 'valkey-cli ping | grep PONG']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - valkey
+
+networks:
+  valkey:
+    name: valkey
+    external: false

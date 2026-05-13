@@ -39,9 +39,9 @@ services:
       ALLOW_EMPTY_PASSWORD: no
       VALKEY_DATABASES: 10000000
       VALKEY_EXTRA_FLAGS: --save 60 1 --loglevel warning
-      VALKEY_PASSWORD: ${DB_ADMIN_PASS:-l37u58CUsw2BXURTrTmnjYjBO5IDRyEP}
+      VALKEY_PASSWORD: ${DB_ADMIN_PASS:-changeme_admin_password}
     ports:
-      - 6379:6379
+      - 172.17.0.1:6379:6379
     volumes:
       - './volumes/data/db/valkey:/data'
     healthcheck:

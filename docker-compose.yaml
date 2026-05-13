@@ -22,6 +22,7 @@ services:
       HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
       REDIS_1_NAME: valkey
       REDIS_1_HOST: valkey
+      REDIS_1_AUTH: ${DB_ADMIN_PASS:-changeme_admin_password}
     ports:
       - '172.17.0.1:59031:80'
     depends_on:
@@ -57,10 +58,7 @@ services:
     logging: *default-logging
     environment:
       CONTAINER_NAME: valkey
-      ALLOW_EMPTY_PASSWORD: no
-      VALKEY_DATABASES: 10000000
-      VALKEY_EXTRA_FLAGS: --save 60 1 --loglevel warning
-      VALKEY_PASSWORD: ${DB_ADMIN_PASS:-changeme_admin_password}
+      VALKEY_EXTRA_FLAGS: --save 60 1 --loglevel warning --requirepass ${DB_ADMIN_PASS:-changeme_admin_password}
     ports:
       - 172.17.0.1:6379:6379
     volumes:

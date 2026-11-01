@@ -1,0 +1,70 @@
+name: valkey
+x-logging: &default-logging
+  options:
+    max-size: '5m'
+    max-file: '1'
+  driver: json-file
+
+services:
+  db:
+    image: valkey/valkey:latest
+    container_name: valkey
+    hostname: valkey
+    restart: always
+    pull_policy: always
+    logging: *default-logging
+    environment:
+      TZ: ${TZ:-America/New_York}
+      CONTAINER_NAME: valkey
+      VALKEY_EXTRA_FLAGS: --save 60 1 --loglevel warning --requirepass ${DB_ADMIN_PASS:-replace-with-a-random-password}
+    volumes:
+      - './volumes/db/valkey/valkey:/data:z'
+    healthcheck:
+      test: ['CMD-SHELL', 'valkey-cli ping | grep PONG']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - valkey
+
+  admin:
+    image: erikdubbelboer/phpredisadmin:1
+    container_name: valkey-admin
+    hostname: valkey-admin
+    restart: always
+    pull_policy: always
+    tty: true
+    stdin_open: true
+    logging: *default-logging
+    environment:
+      TZ: ${TZ:-America/New_York}
+      CONTAINER_NAME: valkey-admin
+      HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
+      REDIS_1_NAME: valkey
+      REDIS_1_HOST: valkey
+      REDIS_1_AUTH: ${DB_ADMIN_PASS:-replace-with-a-random-password}
+    depends_on:
+      db:
+        condition: service_healthy
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik'
+      - 'traefik.http.routers.valkey-admin.entrypoints=http'
+      - 'traefik.http.routers.valkey-admin.rule=Host(`${BASE_HOST_NAME:-$HOSTNAME}`)'
+      - 'traefik.http.routers.valkey-admin.middlewares=valkey-admin-https-redirect'
+      - 'traefik.http.middlewares.valkey-admin-https-redirect.redirectscheme.scheme=https'
+      - 'traefik.http.routers.valkey-admin-secure.entrypoints=https'
+      - 'traefik.http.routers.valkey-admin-secure.rule=Host(`${BASE_HOST_NAME:-$HOSTNAME}`)'
+      - 'traefik.http.routers.valkey-admin-secure.tls.certresolver=cloudflare'
+      - 'traefik.http.routers.valkey-admin-secure.service=valkey-admin'
+      - 'traefik.http.services.valkey-admin.loadbalancer.server.port=80'
+    networks:
+      - valkey
+      - traefik
+
+networks:
+  valkey:
+    name: valkey
+    external: false
+  traefik:
+    external: true

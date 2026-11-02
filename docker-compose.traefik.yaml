@@ -17,6 +17,8 @@ services:
       TZ: ${TZ:-America/New_York}
       CONTAINER_NAME: valkey
       VALKEY_EXTRA_FLAGS: --save 60 1 --loglevel warning --requirepass ${DB_ADMIN_PASS:-replace-with-a-random-password}
+    ports:
+      - '6379:6379'
     volumes:
       - './volumes/db/valkey/valkey:/data:z'
     healthcheck:
